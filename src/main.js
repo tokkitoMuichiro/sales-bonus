@@ -45,31 +45,37 @@ function calculateBonusByProfit(index, total, seller) {
  * @returns {{revenue, top_products, bonus, name, sales_count, profit, seller_id}[]}
  */
 function analyzeSalesData(data, options) {
-  // @TODO: Проверка входных данных
+  // @TODO: Проверка входных данных - разрешаем пустые массивы
   if (!data || typeof data !== "object") {
     throw new Error("Некорректные данные");
   }
 
-  // Разрешаем пустые массивы, но проверяем их наличие
+  // Проверяем что обязательные поля есть, даже если они пустые
   if (
-    !Array.isArray(data.purchase_records) ||
-    !Array.isArray(data.products) ||
-    !Array.isArray(data.sellers)
+    data.purchase_records === undefined ||
+    data.products === undefined ||
+    data.sellers === undefined
   ) {
     throw new Error(
-      "Некорректные данные: ожидаются массивы purchase_records, products и sellers"
+      "Некорректные данные: ожидаются поля purchase_records, products и sellers"
     );
   }
 
+  // Гарантируем что это массивы (даже если пустые)
+  const purchase_records = Array.isArray(data.purchase_records)
+    ? data.purchase_records
+    : [];
+  const products = Array.isArray(data.products) ? data.products : [];
+  const sellers = Array.isArray(data.sellers) ? data.sellers : [];
+
   // @TODO: Проверка наличия опций - делаем опциональной
-  // Если options не передан или некорректен, используем значения по умолчанию
   const safeOptions =
     options && typeof options === "object" && !Array.isArray(options)
       ? options
       : {};
 
   // @TODO: Подготовка промежуточных данных для сбора статистики
-  const sellerStats = data.sellers.map((seller) => ({
+  const sellerStats = sellers.map((seller) => ({
     seller_id: seller.id,
     name: `${seller.first_name} ${seller.last_name}`,
     revenue: 0,
@@ -81,7 +87,7 @@ function analyzeSalesData(data, options) {
   }));
 
   // @TODO: Индексация продавцов и товаров для быстрого доступа
-  const productIndex = data.products.reduce((acc, product) => {
+  const productIndex = products.reduce((acc, product) => {
     acc[product.sku] = product;
     return acc;
   }, {});
@@ -92,12 +98,15 @@ function analyzeSalesData(data, options) {
   }, {});
 
   // @TODO: Расчет выручки и прибыли для каждого продавца
-  // Если purchase_records пуст, пропускаем этот этап
-  data.purchase_records.forEach((record) => {
+  purchase_records.forEach((record) => {
+    if (!record || !record.items) return;
+
     const stats = sellerIndex[record.seller_id];
-    if (!stats || !record.items) return;
+    if (!stats) return;
 
     record.items.forEach((item) => {
+      if (!item || !item.sku) return;
+
       const product = productIndex[item.sku];
       if (!product) return;
 
