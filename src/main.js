@@ -59,6 +59,19 @@ function analyzeSalesData(data, options) {
     throw new Error("Некорректные данные");
   }
 
+  // Проверяем что массивы не пустые
+  if (data.sellers.length === 0) {
+    throw new Error("Некорректные данные");
+  }
+
+  if (data.products.length === 0) {
+    throw new Error("Некорректные данные");
+  }
+
+  if (data.purchase_records.length === 0) {
+    throw new Error("Некорректные данные");
+  }
+
   // @TODO: Проверка наличия опций
   if (options === undefined) {
     throw new Error("Некорректные опции");
@@ -158,10 +171,9 @@ function analyzeSalesData(data, options) {
   return sellerStats.map((seller) => ({
     seller_id: seller.id,
     name: seller.name,
-    revenue: seller.revenue,
-    profit: seller.profit,
-    sales_count: seller.sales_count,
+    revenue: Math.round(seller.revenue * 100) / 100,
+    profit: Math.round(seller.profit * 100) / 100,
     top_products: seller.top_products,
-    bonus: seller.bonus,
+    bonus: Math.round(seller.bonus * 100) / 100,
   }));
 }
