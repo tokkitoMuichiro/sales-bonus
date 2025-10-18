@@ -7,7 +7,9 @@
 function calculateSimpleRevenue(purchase, _product) {
   const { discount = 0, sale_price = 0, quantity = 0 } = purchase;
   const discountDecimal = discount / 100;
-  const revenue = sale_price * quantity * (1 - discountDecimal);
+  // Более точное вычисление с округлением до копеек на каждом шаге
+  const revenue =
+    Math.round(sale_price * quantity * (1 - discountDecimal) * 100) / 100;
   return revenue;
 }
 
@@ -34,7 +36,7 @@ function calculateBonusByProfit(index, total, seller) {
     bonusPercentage = 0.05;
   }
 
-  return profit * bonusPercentage;
+  return Math.round(profit * bonusPercentage * 100) / 100;
 }
 
 /**
@@ -131,6 +133,7 @@ function analyzeSalesData(data, options) {
     const seller = sellerIndex[record.seller_id];
     if (!seller) return;
 
+    // Увеличиваем количество продаж (чеков) на 1
     seller.sales_count += 1;
 
     record.items.forEach((item) => {
@@ -139,13 +142,15 @@ function analyzeSalesData(data, options) {
       const product = productIndex[item.sku];
       if (!product) return;
 
-      // Расчет выручки и прибыли
+      // Расчет выручки и прибыли с округлением до копеек
       const revenue = calculateRevenue(item, product);
-      const cost = (product.purchase_price || 0) * (item.quantity || 0);
-      const profit = revenue - cost;
+      const cost =
+        Math.round((product.purchase_price || 0) * (item.quantity || 0) * 100) /
+        100;
+      const profit = Math.round((revenue - cost) * 100) / 100;
 
-      seller.revenue += revenue;
-      seller.profit += profit;
+      seller.revenue = Math.round((seller.revenue + revenue) * 100) / 100;
+      seller.profit = Math.round((seller.profit + profit) * 100) / 100;
 
       if (!seller.products_sold[item.sku]) {
         seller.products_sold[item.sku] = 0;
@@ -173,10 +178,10 @@ function analyzeSalesData(data, options) {
   return sellerStats.map((seller) => ({
     seller_id: seller.id,
     name: seller.name,
-    revenue: Number(seller.revenue.toFixed(2)),
-    profit: Number(seller.profit.toFixed(2)),
+    revenue: seller.revenue,
+    profit: seller.profit,
     sales_count: seller.sales_count,
     top_products: seller.top_products,
-    bonus: Number(seller.bonus.toFixed(2)),
+    bonus: seller.bonus,
   }));
 }
