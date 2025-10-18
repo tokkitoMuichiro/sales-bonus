@@ -47,32 +47,23 @@ function analyzeSalesData(data, options) {
   }
 
   // Проверяем что обязательные поля есть и являются массивами
-  if (data.sellers === undefined) {
-    throw new Error("Некорректные данные: отсутствует поле sellers");
-  }
-  if (data.products === undefined) {
-    throw new Error("Некорректные данные: отсутствует поле products");
-  }
-  if (data.purchase_records === undefined) {
-    throw new Error("Некорректные данные: отсутствует поле purchase_records");
+  if (!Array.isArray(data.sellers)) {
+    throw new Error("Некорректные данные");
   }
 
-  if (!Array.isArray(data.sellers)) {
-    throw new Error("Некорректные данные: sellers должен быть массивом");
-  }
   if (!Array.isArray(data.products)) {
-    throw new Error("Некорректные данные: products должен быть массивом");
+    throw new Error("Некорректные данные");
   }
+
   if (!Array.isArray(data.purchase_records)) {
-    throw new Error(
-      "Некорректные данные: purchase_records должен быть массивом"
-    );
+    throw new Error("Некорректные данные");
   }
 
   // @TODO: Проверка наличия опций
   if (options === undefined) {
     throw new Error("Некорректные опции");
   }
+
   if (
     typeof options !== "object" ||
     options === null ||
@@ -103,19 +94,23 @@ function analyzeSalesData(data, options) {
   }));
 
   // @TODO: Индексация продавцов и товаров для быстрого доступа
-  const sellerIndex = sellerStats.reduce((acc, seller) => {
-    acc[seller.id] = seller;
-    return acc;
-  }, {});
+  const sellerIndex = {};
+  data.sellers.forEach((seller) => {
+    if (seller && seller.id) {
+      sellerIndex[seller.id] = sellerStats.find((s) => s.id === seller.id);
+    }
+  });
 
-  const productIndex = data.products.reduce((acc, product) => {
-    acc[product.sku] = product;
-    return acc;
-  }, {});
+  const productIndex = {};
+  data.products.forEach((product) => {
+    if (product && product.sku) {
+      productIndex[product.sku] = product;
+    }
+  });
 
   // @TODO: Расчёт выручки и прибыли для каждого продавца
   data.purchase_records.forEach((record) => {
-    if (!record || !record.items) return;
+    if (!record || !Array.isArray(record.items)) return;
 
     const seller = sellerIndex[record.seller_id];
     if (!seller) return;
