@@ -5,7 +5,6 @@
  * @returns {number}
  */
 function calculateSimpleRevenue(purchase, _product) {
-  // @TODO: Расчёт прибыли от операции
   const { discount = 0, sale_price = 0, quantity = 0 } = purchase;
   const discountDecimal = discount / 100;
   const revenue = sale_price * quantity * (1 - discountDecimal);
@@ -20,7 +19,6 @@ function calculateSimpleRevenue(purchase, _product) {
  * @returns {number}
  */
 function calculateBonusByProfit(index, total, seller) {
-  // @TODO: Расчёт бонуса от позиции в рейтинге
   const { profit = 0 } = seller;
 
   if (index === 0) {
@@ -46,6 +44,7 @@ function analyzeSalesData(data, options) {
     throw new Error("Некорректные данные");
   }
 
+  // Проверяем что обязательные поля есть и являются массивами
   if (!Array.isArray(data.sellers)) {
     throw new Error("Некорректные данные: sellers должен быть массивом");
   }
@@ -58,6 +57,19 @@ function analyzeSalesData(data, options) {
     throw new Error(
       "Некорректные данные: purchase_records должен быть массивом"
     );
+  }
+
+  // Проверяем что массивы не пустые
+  if (data.sellers.length === 0) {
+    throw new Error("Некорректные данные: массив sellers пуст");
+  }
+
+  if (data.products.length === 0) {
+    throw new Error("Некорректные данные: массив products пуст");
+  }
+
+  if (data.purchase_records.length === 0) {
+    throw new Error("Некорректные данные: массив purchase_records пуст");
   }
 
   // @TODO: Проверка наличия опций
