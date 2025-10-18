@@ -21,6 +21,8 @@ function calculateSimpleRevenue(purchase, _product) {
 function calculateBonusByProfit(index, total, seller) {
   const { profit = 0 } = seller;
 
+  if (total === 0) return 0;
+
   if (index === 0) {
     return Math.round(profit * 0.15);
   } else if (index === 1 || index === 2) {
@@ -45,14 +47,22 @@ function analyzeSalesData(data, options) {
   }
 
   // Проверяем что обязательные поля есть и являются массивами
+  if (data.sellers === undefined) {
+    throw new Error("Некорректные данные: отсутствует поле sellers");
+  }
+  if (data.products === undefined) {
+    throw new Error("Некорректные данные: отсутствует поле products");
+  }
+  if (data.purchase_records === undefined) {
+    throw new Error("Некорректные данные: отсутствует поле purchase_records");
+  }
+
   if (!Array.isArray(data.sellers)) {
     throw new Error("Некорректные данные: sellers должен быть массивом");
   }
-
   if (!Array.isArray(data.products)) {
     throw new Error("Некорректные данные: products должен быть массивом");
   }
-
   if (!Array.isArray(data.purchase_records)) {
     throw new Error(
       "Некорректные данные: purchase_records должен быть массивом"
@@ -60,11 +70,9 @@ function analyzeSalesData(data, options) {
   }
 
   // @TODO: Проверка наличия опций
-
   if (options === undefined) {
     throw new Error("Некорректные опции");
   }
-
   if (
     typeof options !== "object" ||
     options === null ||
@@ -107,10 +115,14 @@ function analyzeSalesData(data, options) {
 
   // @TODO: Расчёт выручки и прибыли для каждого продавца
   data.purchase_records.forEach((record) => {
+    if (!record || !record.items) return;
+
     const seller = sellerIndex[record.seller_id];
     if (!seller) return;
 
     record.items.forEach((item) => {
+      if (!item || !item.sku) return;
+
       const product = productIndex[item.sku];
       if (!product) return;
 
@@ -144,7 +156,7 @@ function analyzeSalesData(data, options) {
     seller.top_products = Object.entries(seller.products_sold)
       .map(([sku, quantity]) => ({ sku, quantity }))
       .sort((a, b) => b.quantity - a.quantity)
-      .slice(0, 3); // Топ-3 товара
+      .slice(0, 3);
   });
 
   // @TODO: Подготовка итоговой коллекции с нужными полями
